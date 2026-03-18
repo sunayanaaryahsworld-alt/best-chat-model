@@ -36,14 +36,8 @@ def _load_model(name: str):
     """Dynamically import and return the ask_model function for `name`."""
     import importlib
     module_map = {
-        "gemini":      "models.gemini_model",
         "groq":        "models.groq_model",
         "openrouter":  "models.openrouter_model",
-        "together":    "models.together_model",
-        "cohere":      "models.cohere_model",
-        "replicate":   "models.replicate_model",
-        "fireworks":   "models.fireworks_model",
-        "ollama":      "models.ollama_model",
     }
     if name not in module_map:
         raise ValueError(f"Unknown model name: '{name}'")

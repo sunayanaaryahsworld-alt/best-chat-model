@@ -14,10 +14,44 @@ import sys
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Body
 
 import router as llm_router
 import usage_tracker
 
+ALLOWED_TOPICS = [
+    "salon","spa","hair","hairstyle","haircut",
+    "beauty","facial","skin","skincare",
+    "makeup","nail","massage","grooming",
+    "barber","trend","style",
+    "pimple","pimples","acne","face","glow"
+]
+GREETING_WORDS = [
+    "hi",
+    "hello",
+    "hey",
+    "hii",
+    "good morning",
+    "good evening",
+    "good afternoon"
+]
+
+def is_allowed_question(text: str) -> bool:
+
+    text = text.lower()
+
+    # allow greetings
+    for g in GREETING_WORDS:
+        if g in text:
+            return True
+
+    # allow salon topics
+    for word in ALLOWED_TOPICS:
+        if word in text:
+            return True
+
+    return False
+    
 # ─── Logging setup ────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -52,36 +86,6 @@ def health():
     """Simple liveness probe."""
     return {"status": "ok"}
 
-
-@app.get("/chat", tags=["Chat"])
-def chat(
-    q: str = Query(..., description="The prompt / question to send to the LLM router"),
-):
-    """
-    Route a prompt through the configured LLM models.
-
-    Returns the first successful (or best-scored) response along with
-    metadata about which model answered and which ones failed.
-    """
-    if not q.strip():
-        raise HTTPException(status_code=400, detail="Query 'q' must not be empty.")
-
-    logger.info("Incoming query: %r", q[:120])
-
-    try:
-        result = llm_router.route(q)
-        logger.info(
-            "Query answered by [%s] | tried=%s | failed=%s",
-            result["model_used"],
-            result["tried"],
-            result["failed"],
-        )
-        return result
-    except RuntimeError as exc:
-        logger.error("All models failed: %s", exc)
-        raise HTTPException(status_code=503, detail=str(exc))
-
-
 @app.get("/stats", tags=["System"])
 def stats():
     """Return per-model usage statistics."""
@@ -94,7 +98,40 @@ def reset_stats():
     usage_tracker.reset_stats()
     return {"status": "stats reset"}
 
+@app.post("/chat")
+def chat(data: dict = Body(...)):
 
+    prompt = data.get("message", "")
+
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Empty message")
+
+    # ✅ restrict domain
+    if not is_allowed_question(prompt):
+
+        return {
+            "response": "I can only answer questions related to salon, spa, beauty, hairstyle, skincare, or grooming.",
+            "model_used": "filter"
+        }
+
+    # ✅ call router
+    short_prompt = f"""
+    You are a salon and beauty assistant.
+    
+    STRICT RULES:
+    - Answer in maximum 2 lines only
+    - No bullet points
+    - No long explanations
+    - Keep it simple and direct
+    
+    Question: {prompt}
+"""
+
+    result = llm_router.route(short_prompt)
+    result["response"] = result["response"].split("\n")[0][:200]    
+    
+    return result
+    
 @app.get("/ranking")
 def ranking():
 

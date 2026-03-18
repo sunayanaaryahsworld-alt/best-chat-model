@@ -9,7 +9,7 @@ httpx>=0.27.0
 python-dotenv>=1.0.0
 
 # ── LLM provider SDKs ─────────────────────────────────────────────────────────
-google-generativeai>=0.7.0        # Gemini
+google-genai>=1.0.0        # ✅ Gemini (NEW SDK)
 groq>=0.9.0                       # Groq
 together>=1.2.0                   # Together AI
 cohere>=5.5.0                     # Cohere

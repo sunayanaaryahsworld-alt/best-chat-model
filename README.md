@@ -1,192 +1,129 @@
-# Multi-LLM Smart Router Chatbot
+✅ Step 1 — Open project folder in terminal
 
-A production-grade FastAPI service that routes prompts through **9 LLM providers** with automatic failover and a local Ollama safety net.
+Go to project folder:
 
----
+F:\Best-Chat-Model
 
-## Features
+Activate venv:
 
-| Feature | Details |
-|---|---|
-| **Providers** | Gemini, Groq, OpenRouter, Together AI, Cohere, HuggingFace, Replicate, Fireworks, Ollama |
-| **Fallback mode** | Try models in priority order → return first success |
-| **Best-model mode** | Query all models concurrently → return highest-scored response |
-| **Error handling** | Timeout, quota, auth, network, empty-response errors all handled gracefully |
-| **Usage tracking** | Per-model success/failure counts, latency, success rate |
-| **Response scoring** | Length, lexical diversity, refusal detection |
+venv\Scripts\activate
 
----
+You should see:
 
-## Project Structure
+(venv) PS F:\Best-Chat-Model>
 
-```
-project/
-├── main.py              # FastAPI app + endpoints
-├── router.py            # Core routing logic (fallback & best-model modes)
-├── config.py            # All settings loaded from environment variables
-├── usage_tracker.py     # In-memory per-model stats
-├── evaluator.py         # Response scoring for best-model mode
-├── models/
-│   ├── gemini_model.py
-│   ├── groq_model.py
-│   ├── openrouter_model.py
-│   ├── together_model.py
-│   ├── cohere_model.py
-│   ├── huggingface_model.py
-│   ├── replicate_model.py
-│   ├── fireworks_model.py
-│   └── ollama_model.py
-├── requirements.txt
-└── .env.example
-```
+✅ Correct
 
----
+✅ Step 2 — Install requirements (only first time)
 
-## Quick Start
+Run:
 
-### 1. Clone / copy the project
-
-```bash
-cd project
-```
-
-### 2. Create a virtual environment
-
-```bash
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-```
-
-### 3. Install dependencies
-
-```bash
 pip install -r requirements.txt
-```
 
-### 4. Configure API keys
+Only needed once.
 
-```bash
-cp .env.example .env
-# Open .env in your editor and add your real API keys
-```
+✅ Step 3 — Check .env file
 
-You only need keys for the providers you want to use.  
-Models without a key are automatically skipped.
+Make sure .env has keys:
 
-### 5. (Optional) Install and start Ollama for local fallback
+GROQ_API_KEY=xxxx
+OPENROUTER_API_KEY=xxxx
+DEEPINFRA_API_KEY=xxxx
 
-```bash
-# Install: https://ollama.com/download
-ollama pull llama3        # or whichever model you set in OLLAMA_MODEL
-ollama serve              # starts on http://localhost:11434
-```
+If missing → APIs fail.
 
-### 6. Run the server
+✅ Step 4 — Run backend (IMPORTANT)
 
-```bash
-python main.py
-# or
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
+You must run FastAPI first.
 
----
+Run:
 
-## API Endpoints
+uvicorn main:app --reload
 
-### Chat
+You should see:
 
-```
-GET /chat?q=<your prompt>
-```
+Uvicorn running on http://127.0.0.1:8000
 
-**Example:**
-```bash
-curl "http://localhost:8000/chat?q=Explain+quantum+entanglement+simply"
-```
+✅ Backend running
 
-**Response:**
-```json
-{
-  "response": "Quantum entanglement is...",
-  "model_used": "groq",
-  "mode": "fallback",
-  "tried": ["gemini", "groq"],
-  "failed": ["gemini"]
-}
-```
+✅ Step 5 — Test API (optional)
 
-### Usage Statistics
+Open browser:
 
-```
-GET /stats
-```
+http://127.0.0.1:8000/health
 
-Returns per-model success/failure counts, average latency, and recent errors.
+Should show:
 
-### Reset Statistics
+{"status":"ok"}
 
-```
-POST /stats/reset
-```
+Test chat:
 
-### Health Check
+http://127.0.0.1:8000/chat?q=hello
 
-```
-GET /health
-```
+✅ Router works
 
----
+✅ Step 6 — Open UI
 
-## Configuration Reference
+Go to:
 
-All settings live in `.env` (copied from `.env.example`):
+frontend/chatbot_ui.html
 
-| Variable | Default | Description |
-|---|---|---|
-| `ROUTER_MODE` | `fallback` | `fallback` or `best` |
-| `MODEL_PRIORITY` | all models | Comma-separated priority order |
-| `REQUEST_TIMEOUT` | `20` | Seconds per API call |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | `llama3` | Model to use in Ollama |
-| `*_MODEL` | see config.py | Model name per provider |
+Open in browser.
 
----
+OR right click → Open with browser
 
-## Router Modes
+Now UI connects to:
 
-### Fallback Mode (`ROUTER_MODE=fallback`)
+http://127.0.0.1:8000
+✅ Step 7 — Test chat
 
-```
-Prompt → Gemini → [fail] → Groq → [success] → Response
-```
+Type:
 
-Models are tried in `MODEL_PRIORITY` order. The first successful response wins. Ollama is always appended as the last resort.
+Explain AI
 
-### Best-Model Mode (`ROUTER_MODE=best`)
+You should see:
 
-```
-Prompt → [Gemini, Groq, OpenRouter, ...] (concurrent)
-       → Score all responses
-       → Return highest-scored response
-```
+Trying openrouter...
+Trying groq...
 
-All models are queried simultaneously. The evaluator scores each response on length, lexical diversity, and absence of refusal phrases.
+And response.
 
----
+✅ Project running
 
-## Adding a New Provider
+✅ When to run test files
+test_models.py
 
-1. Create `models/my_provider_model.py` with a single function:
-   ```python
-   def ask_model(prompt: str) -> str:
-       ...
-   ```
-2. Add the name → module mapping in `router.py` → `_load_model()`.
-3. Add the key/model name to `config.py` and `.env.example`.
-4. Add the name to `MODEL_PRIORITY` in your `.env`.
+Used to test APIs only
 
----
+python test_models.py
 
-## License
+Not required for UI.
 
-MIT
+test_router.py
+
+Used to test router only
+
+python test_router.py
+
+Not required for UI.
+
+✅ Correct order to run project
+1. Activate venv
+2. python main.py
+3. open chatbot_ui.html
+4. send message
+
+That’s it.
+
+✅ Project flow (important)
+chatbot_ui.html
+    ↓
+main.py (FastAPI)
+    ↓
+router.py
+    ↓
+models/*
+    ↓
+evaluator.py (if best mode)
+    ↓
+usage_tracker.py
