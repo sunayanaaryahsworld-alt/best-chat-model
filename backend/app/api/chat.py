@@ -35,6 +35,7 @@ class ChatRequest(BaseModel):
     location: Optional[str] = None
     salon_name: Optional[str] = None
 
+ALL_SALONS_CACHE = None
 
 # =========================================================
 # Safe Firebase Wrapper
@@ -55,19 +56,21 @@ def safe_firebase(fn, default):
 @router.post("/chat-stream")
 async def chat_stream(request: ChatRequest):
 
+    import json
+
     response = await chat(request)
 
     # ✅ safety check
     if not response:
-        reply = "Sorry, something went wrong."
-    else:
-        reply = response.get("reply_text", "No reply")
+        response = {"reply_text": "Sorry, something went wrong."}
+
+    reply = response.get("reply_text", "No reply")
 
     async def generate():
+        yield reply
 
-        for word in reply.split():
-            yield word + " "
-            await asyncio.sleep(0.02)
+        metadata = {k: v for k, v in response.items() if k != "reply_text"}
+        yield "\n\n__META__" + json.dumps(metadata)
 
     return StreamingResponse(generate(), media_type="text/plain")
 
@@ -91,62 +94,62 @@ async def chat(request: ChatRequest):
     9. Beauty tips (AI only)
     10. Free text (AI fallback only)
     """
+    
+    global ALL_SALONS_CACHE
     raw_message = request.message.strip()
     message = raw_message.lower()
-
-    print(f"📩 MESSAGE: {raw_message}")
-    print(f"📍 LOCATION: {request.location}")
-    print(f"🏪 SALON: {request.salon_name}")
     
     # =====================================================
     # 1️⃣ EXACT SALON NAME MATCH (highest priority)
     # =====================================================
     # Check if user typed exact salon name
-    salon_id = safe_firebase(lambda: get_salon_id_by_name(raw_message), None)
+    global ALL_SALONS_CACHE
     
-    if salon_id:
-        all_salons = safe_firebase(get_all_salons, [])
-        salon = next(
-            (s for s in all_salons if s["name"].lower() == raw_message.lower()),
-            None
-        )
-        
-        if salon:
-            return {
-                "reply_text": f"✨ Found: {salon['name']}",
-                "type": "salon_list",
-                "salons": [salon],
-                "suggestions": [
-                    "View services",
-                    "How Nexsalon works",
-                ],
-            }
-
+    if ALL_SALONS_CACHE is None:
+        ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+    
+    all_salons = ALL_SALONS_CACHE
+    
+    salon = next(
+        (s for s in all_salons if s["name"].lower() == raw_message.lower()),
+        None
+    )
+    
+    if salon:
+        return {
+            "reply_text": f"✨ Found: {salon['name']}",
+            "type": "salon_list",
+            "salons": [salon],
+            "suggestions": [
+                "View services",
+                "How Nexsalon works",
+            ],
+        }
+    
     # =====================================================
     # 2️⃣ INTENT DETECTION
     # =====================================================
     intent = detect_intent(message)
-    print(f"🧠 INTENT: {intent}")
-
-    # =====================================================
-    # 3️⃣ WELCOME / GREETING
-    # =====================================================
+        
+        # =====================================================
+        # 3️⃣ WELCOME / GREETING
+        # =====================================================
     if intent == "WELCOME":
         return {
             "reply_text": (
-                "👋 Hi! I'm Nexsalon Concierge ✨\n\n"
-                "I can help you:\n"
-                "• Find salons near you\n"
-                "• Browse services & prices\n"
-                "• Get beauty advice\n"
-            ),
-            "type": "welcome",
-            "suggestions": [
-                "Show salons near me",
-                "Show all salons",
-                "How Nexsalon works",
-            ],
-        }
+            "👋 Hi! I'm Nexsalon Concierge ✨\n\n"
+            "I can help you:\n"
+            "• Find salons near you\n"
+            "• Browse services & prices\n"
+            "• Get beauty advice\n"
+                ),
+                "type": "welcome",
+                "suggestions": [
+                    "Show salons near me",
+                    "Show all salons",
+                    "How Nexsalon works",
+                ],
+            }
 
     # =====================================================
     # 4️⃣ LOCATION - ASK FOR CITY (near me / nearby)
@@ -166,10 +169,7 @@ async def chat(request: ChatRequest):
     if request.location:
         city = request.location.strip()
         
-        salons = safe_firebase(
-            lambda: get_salons_by_location(city),
-            []
-        )
+        salons = get_salons_by_location(city)
 
         if not salons:
             return {
@@ -191,29 +191,35 @@ async def chat(request: ChatRequest):
     # =====================================================
     # 6️⃣ SHOW ALL SALONS
     # =====================================================
-    if intent == "SHOW_SALONS":
-        salons = safe_firebase(get_all_salons, [])
-
-        if not salons:
-            return {
-                "reply_text": "No salons available right now.",
-                "type": "empty",
-                "suggestions": ["How Nexsalon works"],
-            }
-
-        return {
-            "reply_text": "All available salons:",
-            "type": "salon_list",
-            "salons": salons,
-            "suggestions": ["View services", "How Nexsalon works"],
-        }
+    async def chat():
+        if intent == "SHOW_SALONS":
+            global ALL_SALONS_CACHE
     
+            if ALL_SALONS_CACHE is None:
+                ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+    
+            salons = ALL_SALONS_CACHE
+    
+            if not salons:
+                return {
+                    "reply_text": "No salons available right now.",
+                    "type": "empty",
+                    "suggestions": ["How Nexsalon works"],
+                }
+    
+            return {
+                "reply_text": "All available salons:",
+                "type": "salon_list",
+                "salons": salons,
+                "suggestions": ["View services", "How Nexsalon works"],
+            }
+        
     # =====================================================
     # ⭐ TOP RATED SALONS
     # =====================================================
     if intent == "TOP_RATED":
     
-        salons = safe_firebase(get_top_rated_salons, [])
+        salons = get_top_rated_salons()
     
         if not salons:
             return {
@@ -229,13 +235,12 @@ async def chat(request: ChatRequest):
             "suggestions": ["View services", "Show all salons"],
         }
         
-        
-            # =====================================================
+    # =====================================================
     # 🔥 TRENDING SALONS
     # =====================================================
     if intent == "TRENDING":
     
-        salons = safe_firebase(get_trending_salons, [])
+        salons = get_trending_salons()
     
         if not salons:
             return {
@@ -251,9 +256,9 @@ async def chat(request: ChatRequest):
             "suggestions": ["View services"],
         }
         
-        # =====================================================
-# ⭐ BEST SALON IN CITY
-# =====================================================
+    # =====================================================
+    # ⭐ BEST SALON IN CITY
+    # =====================================================
     if intent == "BEST_IN_CITY":
     
         city = extract_city(message)
@@ -281,7 +286,7 @@ async def chat(request: ChatRequest):
             "salons": salons,
         }
         
-            # =====================================
+    # =====================================
     # CHEAP SALONS
     # =====================================
     
@@ -353,7 +358,8 @@ async def chat(request: ChatRequest):
             "salons": salons,
             "suggestions": ["Top rated salons", "Cheap salons"],
         }
-        # =====================================================
+
+    # =====================================================
     # 7️⃣ SHOW SERVICES (requires salon selected)
     # =====================================================
     if intent == "SHOW_SERVICES":
@@ -410,16 +416,17 @@ async def chat(request: ChatRequest):
     #     }
 
     # =====================================================
-# PROBLEM → SERVICE RECOMMEND
-# =====================================================
+    # PROBLEM → SERVICE RECOMMEND
+    # =====================================================
     if intent == "PROBLEM_SERVICE":
     
         services = recommend_service(message)
     
         text = "Recommended services:\n"
     
-        for s in services:
-            text += f"• {s}\n"
+        text = "Recommended services:\n" + "\n".join(
+            [f"• {s}" for s in services]
+)
     
         best_salons = get_best_salon_for_service(services[0])
     
@@ -430,9 +437,9 @@ async def chat(request: ChatRequest):
             "suggestions": ["Show salons", "Beauty tips"],
         }
    
-   # =====================================================
-# 9️⃣ BEAUTY TIPS (AI only)
-# =====================================================
+    # =====================================================
+    # 9️⃣ BEAUTY TIPS (AI only)
+    # =====================================================
     if intent == "BEAUTY_SUGGESTION":
     
         try:
@@ -452,6 +459,7 @@ async def chat(request: ChatRequest):
             "type": "beauty_tip",
             "suggestions": ["Show all salons", "How Nexsalon works"],
         }
+
     # =====================================================
     # 🔟 APP GUIDE
     # =====================================================
@@ -471,11 +479,15 @@ async def chat(request: ChatRequest):
 
     # =====================================================
     # 1️⃣1️⃣ FREE TEXT (AI fallback only)
-    # ==================================================  ]
+    # =====================================================
     else:
 
         # try DB first
-        salons = safe_firebase(get_all_salons, [])
+    
+        if ALL_SALONS_CACHE is None:
+            ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+    
+        salons = ALL_SALONS_CACHE
     
         if salons:
             return {
