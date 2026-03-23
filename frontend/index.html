@@ -1,0 +1,98 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nexsalon AI Concierge</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="widget-wrapper">
+  <div class="chat-widget">
+    <div class="chat-header">
+      <div class="title">✨ Nexsalon Concierge</div>
+      <div class="subtitle">Your salon & spa assistant</div>
+    </div>
+
+    <div id="chat-box" class="chat-box"></div>
+    <div id="quick-actions" class="quick-actions"></div>
+
+    <form id="chat-form" class="chat-input">
+      <input id="user-input" placeholder="Ask about salons, services, bookings…" />
+      <button id="send-btn">➤</button>
+    </form>
+  </div>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nexsalon AI Concierge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Ambient background petals -->
+<div class="ambient">
+  <div class="petal p1"></div>
+  <div class="petal p2"></div>
+  <div class="petal p3"></div>
+  <div class="petal p4"></div>
+  <div class="petal p5"></div>
+</div>
+
+<div class="widget-wrapper">
+  <div class="chat-widget">
+
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="header-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C8 2 5 5 5 9c0 3 1.5 5.5 4 7l1 4h4l1-4c2.5-1.5 4-4 4-7 0-4-3-7-7-7z" fill="rgba(255,255,255,0.9)"/>
+          <circle cx="12" cy="9" r="2" fill="rgba(255,200,180,0.8)"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <div class="title">Nexsalon Concierge</div>
+        <div class="subtitle">
+          <span class="status-dot"></span>
+          Your luxury salon &amp; spa guide
+        </div>
+      </div>
+      <div class="header-badge">✦</div>
+    </div>
+
+    <!-- Chat messages -->
+    <div id="chat-box" class="chat-box"></div>
+
+    <!-- Quick action chips -->
+    <div id="quick-actions" class="quick-actions"></div>
+
+    <!-- Input -->
+    <form id="chat-form" class="chat-input">
+      <input id="user-input" placeholder="Ask about salons, services, bookings…" autocomplete="off" />
+      <button id="send-btn" type="submit" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </form>
+
+  </div>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>

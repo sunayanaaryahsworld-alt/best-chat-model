@@ -64,3 +64,8 @@ node_modules/
 # Jupyter (if used)
 # ─────────────────────────────────────────────
 .ipynb_checkpoints/
+
+
+# OS
+.DS_Store
+firebase_key.json

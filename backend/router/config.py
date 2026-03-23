@@ -18,19 +18,16 @@ MODEL_PRIORITY = ["groq", "openrouter"]
 
 GROQ_MODEL          = os.getenv("GROQ_MODEL",         "llama-3.1-8b-instant")
 OPENROUTER_MODEL = "openrouter/auto"
-# OLLAMA_MODEL        = os.getenv("OLLAMA_MODEL",       "llama3")
-# OLLAMA_BASE_URL     = os.getenv("OLLAMA_BASE_URL",    "http://localhost:11434")
 
 # ─── Request timeout (seconds) ───────────────────────────────────────────────
 REQUEST_TIMEOUT     = int(os.getenv("REQUEST_TIMEOUT", "20"))
 
 # ─── Router mode ─────────────────────────────────────────────────────────────
-# "fallback" → try models in order, return first success
-# "best"     → query all models concurrently, pick highest-scored response
+
 ROUTER_MODE = "fallback"
 
 # ─── Model priority list (fallback mode) ─────────────────────────────────────
 # Names must match keys registered in router.py MODEL_REGISTRY.
 # Ollama is always appended as the final local fallback.
 
-MODEL_PRIORITY = ["deepinfra", "groq", "openrouter"]
+MODEL_PRIORITY = ["groq", "openrouter"]

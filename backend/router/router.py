@@ -1,28 +1,11 @@
-"""
-router.py
-The heart of the Multi-LLM Smart Router.
-
-Two modes (set via ROUTER_MODE in config.py / .env):
-  • "fallback" (default) — try models in priority order; return the first
-                           successful response.
-  • "best"               — query all models concurrently; return the
-                           highest-scored response.
-
-Error categories handled:
-  • Network / timeout errors   → skip to next model
-  • HTTP 4xx quota / auth      → skip to next model
-  • Empty / garbled responses  → skip to next model
-  • All models fail            → Ollama local fallback
-"""
-
 import asyncio
 import logging
 import time
 from typing import Optional
 
-import usage_tracker
-from config import MODEL_PRIORITY, ROUTER_MODE
-from evaluator import pick_best
+import router.usage_tracker as usage_tracker
+from router.config import MODEL_PRIORITY, ROUTER_MODE
+from router.evaluator import pick_best
 
 # ─── Logger ──────────────────────────────────────────────────────────────────
 logger = logging.getLogger("router")
@@ -35,10 +18,14 @@ logger = logging.getLogger("router")
 def _load_model(name: str):
     """Dynamically import and return the ask_model function for `name`."""
     import importlib
+    # module_map = {
+    #     "groq":        "models.groq_model",
+    #     "openrouter":  "models.openrouter_model",
+    # }
     module_map = {
-        "groq":        "models.groq_model",
-        "openrouter":  "models.openrouter_model",
-    }
+    "groq": "router.models.groq_model",
+    "openrouter": "router.models.openrouter_model",
+}
     if name not in module_map:
         raise ValueError(f"Unknown model name: '{name}'")
     module = importlib.import_module(module_map[name])
@@ -113,11 +100,6 @@ def _route_fallback(prompt: str) -> dict:
     """
     priority = list(MODEL_PRIORITY)
 
-    # Ensure Ollama is always last (deduplicate)
-    if "ollama" in priority:
-        priority.remove("ollama")
-    priority.append("ollama")
-
     tried = []
     failed = []
 
@@ -145,8 +127,6 @@ def _route_best(prompt: str) -> dict:
     Falls back to Ollama if all concurrent calls fail.
     """
     priority = list(MODEL_PRIORITY)
-    if "ollama" not in priority:
-        priority.append("ollama")
 
     async def _gather():
         tasks = [_call_model_async(name, prompt) for name in priority]

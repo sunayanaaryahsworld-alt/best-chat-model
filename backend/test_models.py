@@ -1,4 +1,4 @@
-from config import (
+from  router.config  import (
     GROQ_API_KEY,
     OPENROUTER_API_KEY
 )
