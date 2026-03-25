@@ -193,13 +193,33 @@ async function detectCity() {
           );
           const data = await res.json();
           // Try multiple address fields in order of specificity
-          const city =
-            data.address?.city ||
-            data.address?.town ||
+          // const city =
+          //   data.address?.city ||
+          //   data.address?.town ||
+          //   data.address?.village ||
+          //   data.address?.county ||
+          //   null;
+          // resolve(city);
+         
+          // TO THIS:
+          let area =
+            data.address?.suburb ||
+            data.address?.neighbourhood ||
+            data.address?.quarter ||
             data.address?.village ||
-            data.address?.county ||
+            data.address?.town ||
+            data.address?.city ||
             null;
-          resolve(city);
+          
+          if (area) {
+            // Strip directional suffixes: "Belapur West" → "Belapur"
+            area = area
+              .replace(/\s+(West|East|North|South|Central|New|Old)$/i, "")
+              .trim();
+          }
+          
+          resolve(area);
+
         } catch (e) {
           console.error("Reverse geocode error:", e);
           resolve(null);

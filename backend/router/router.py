@@ -154,3 +154,30 @@ def _route_best(prompt: str) -> dict:
         "tried": tried,
         "failed": failed,
     }
+    
+    
+def route_stream(prompt: str):
+    """
+    Try Groq streaming first.
+    If Groq fails/quota over, fall back to OpenRouter (non-stream).
+    Yields tokens.
+    """
+    # Try Groq stream first
+    try:
+        from router.models.groq_model import ask_model_stream
+        token_count = 0
+        for token in ask_model_stream(prompt):
+            token_count += 1
+            yield token
+        return  # Groq succeeded, done
+    except Exception as e:
+        logger.warning("[groq] stream failed, falling back to openrouter: %s", e)
+
+    # Groq failed → fallback to OpenRouter (yields full response at once)
+    try:
+        from router.models.openrouter_model import ask_model
+        response = ask_model(prompt)
+        yield response
+    except Exception as e:
+        logger.warning("[openrouter] also failed: %s", e)
+        yield "Sorry, AI temporarily unavailable."    

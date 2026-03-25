@@ -53,25 +53,36 @@ def detect_intent(message: str) -> str:
     if re.search(r"\b(show|find|list|display)\b.*\bsalon", msg):
         return "SHOW_SALONS"
 
-    # 5️⃣ SHOW SERVICES - view/show services
-    if re.search(r"\b(show|view|see|display)\b.*\b(service|services)\b", msg):
+    # # 5️⃣ SHOW SERVICES - view/show services
+    # if re.search(r"\b(show|view|see|display)\b.*\b(service|services)\b", msg):
+    #     return "SHOW_SERVICES"
+    if re.search(
+    r"\b(show|view|see|display|what|which|list|tell|provide)\b.*\b(service|services)\b",
+    msg
+):
         return "SHOW_SERVICES"
+        
+    if re.search(r"\b(service|services)\b", msg):
+        return "SHOW_SERVICES"    
 
     # # 6️⃣ BOOKING - book, appointment, reserve
     # if re.search(r"\b(book|booking|appointment|schedule|reserve)\b", msg):
     #     return "BOOK_SERVICE"
 
-        # PROBLEM BASED SERVICE
+    # PROBLEM BASED SERVICE
+ # PROBLEM → SERVICE (only when user wants treatment / salon)
     if re.search(
-        r"\b(hair fall|dandruff|dry skin|frizzy|pimple|acne|hair damage|rough hair)\b",
+        r"\b(treatment|service|salon|facial|spa|therapy|appointment)\b.*\b(hair fall|dandruff|dry skin|frizzy|pimple|acne|hair damage|rough hair)\b"
+        r"|\b(hair fall|dandruff|dry skin|frizzy|pimple|acne|hair damage|rough hair)\b.*\b(treatment|service|salon|facial|spa|therapy)\b",
         msg,
     ):
         return "PROBLEM_SERVICE"
+
     # 7️⃣ BEAUTY - beauty, skincare, hair, makeup, etc
     if re.search(
-    r"\b(beauty tips|skin tips|hair tips|makeup tips|care tips|suggest tips)\b",
-        msg
-):
+        r"\b(beauty|skin|hair|makeup|care|nail|face|scalp|moistur|sunscreen|glow|pigment|tan|pore|wrinkle|lip|eye|brow|lash|serum|toner|cleanser|shampoo|conditioner|frizz|dandruff|split|growth|strong|damage|dry|oily|acne|pimple|tip|advice|suggest|routine|treatment|how to|what to|remedy|home remedy|natural)\b",
+        msg,
+    ):
         return "BEAUTY_SUGGESTION"
 
     # 8️⃣ FALLBACK - everything else

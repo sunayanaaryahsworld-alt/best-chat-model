@@ -5,7 +5,7 @@ from fastapi.responses import StreamingResponse
 import asyncio
 
 from app.services.intent_service import detect_intent
-from app.services.groq_service import generate_ai_reply
+from app.services.groq_service import generate_ai_reply, generate_ai_reply_stream
 from app.services.firebase_service import (
     get_all_salons,
     get_salons_by_location,
@@ -187,32 +187,30 @@ async def chat(request: ChatRequest):
             "salons": salons,
             "suggestions": ["View services", "How Nexsalon works"],
         }
-
+  
     # =====================================================
     # 6️⃣ SHOW ALL SALONS
     # =====================================================
-    async def chat():
-        if intent == "SHOW_SALONS":
-            global ALL_SALONS_CACHE
-    
-            if ALL_SALONS_CACHE is None:
-                ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
-    
-            salons = ALL_SALONS_CACHE
-    
-            if not salons:
-                return {
-                    "reply_text": "No salons available right now.",
-                    "type": "empty",
-                    "suggestions": ["How Nexsalon works"],
-                }
-    
+    if intent == "SHOW_SALONS":
+
+        if ALL_SALONS_CACHE is None:
+            ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+
+        salons = ALL_SALONS_CACHE
+
+        if not salons:
             return {
-                "reply_text": "All available salons:",
-                "type": "salon_list",
-                "salons": salons,
-                "suggestions": ["View services", "How Nexsalon works"],
+                "reply_text": "No salons available right now.",
+                "type": "empty",
+                "suggestions": ["How Nexsalon works"],
             }
+
+        return {
+            "reply_text": "All available salons:",
+            "type": "salon_list",
+            "salons": salons,
+            "suggestions": ["View services", "How Nexsalon works"],
+        }
         
     # =====================================================
     # ⭐ TOP RATED SALONS

@@ -36,33 +36,17 @@ def get_all_salons():
             if not salon.get("name"):
                 continue
             
-            # Extract city from address
-            # Address format usually has city info, try to extract meaningful part
+            # TO THIS (working):
             address = salon.get("address", "").strip()
             city = ""
             if address:
-                # Look for known cities in the address
-                address_lower = address.lower()
-                if "mumbai" in address_lower:
-                    city = "Mumbai"
-                elif "belapur" in address_lower:
-                    city = "Belapur"
-                elif "delhi" in address_lower:
-                    city = "Delhi"
-                elif "bangalore" in address_lower:
-                    city = "Bangalore"
-                elif "pune" in address_lower:
-                    city = "Pune"
-                elif "hyderabad" in address_lower:
-                    city = "Hyderabad"
-                else:
-                    # Fallback: get last meaningful part before postal code
-                    parts = address.split(",")
-                    if len(parts) > 2:
-                        # Usually city is 2-3 parts from the end
-                        city = parts[-2].strip() if len(parts) > 1 else parts[-1].strip()
-                    elif parts:
-                        city = parts[-1].strip()
+                parts = [p.strip() for p in address.split(",") if p.strip()]
+                if len(parts) >= 3:
+                    city = parts[-3]
+                elif len(parts) == 2:
+                    city = parts[-2]
+                elif parts:
+                    city = parts[-1]
             
             salons.append({
                 "name": salon.get("name", "").strip(),
@@ -128,6 +112,8 @@ def get_salon_id_by_name(salon_name: str):
     except Exception as e:
         print(f"❌ Firebase error (get_salon_id_by_name): {e}")
         return None
+
+
 
 
 # ==================================================
