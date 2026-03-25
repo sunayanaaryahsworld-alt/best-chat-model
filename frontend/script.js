@@ -298,6 +298,7 @@ async function sendToBackend(message) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let lastRenderedLength = 0;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -309,7 +310,8 @@ async function sendToBackend(message) {
 
       if (sentinelIdx !== -1) {
         // Final text render
-        textNode.textContent = buffer.slice(0, sentinelIdx);
+        const finalText = buffer.slice(0, sentinelIdx);
+        textNode.textContent = finalText;
 
         // Parse and render cards + suggestions
         try {
@@ -336,8 +338,12 @@ async function sendToBackend(message) {
         break;
       }
 
-      // Live stream — smooth append, no flicker
-      textNode.textContent = buffer;
+      // Live stream — append only new content for smooth word-by-word effect
+      const newContent = buffer.slice(lastRenderedLength);
+      if (newContent) {
+        textNode.textContent = buffer;
+        lastRenderedLength = buffer.length;
+      }
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 

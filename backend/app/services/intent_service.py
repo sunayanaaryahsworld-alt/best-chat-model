@@ -1,4 +1,5 @@
 import re
+from app.services.firebase_service import get_all_services
 
 def detect_intent(message: str) -> str:
     """
@@ -16,6 +17,16 @@ def detect_intent(message: str) -> str:
     9. FREE_TEXT (everything else → AI reply)
         """
     msg = message.lower().strip()
+    
+    #recommender
+    services = get_all_services()
+
+    has_service = any(s in msg for s in services)
+    has_price = re.search(r"\d{2,5}", msg)
+    
+    if has_service and has_price:
+        print("INTENT CHECK:", msg)
+        return "SMART_RECOMMEND"
 
     # 1️⃣ GREETING - Exact word match only
     if re.fullmatch(r"(hi|hello|hey|hii|hiii|hiii+|start|greetings|begin)", msg):
@@ -24,10 +35,23 @@ def detect_intent(message: str) -> str:
     # 2️⃣ APP GUIDE - about Nexsalon / how Nexsalon works
     if re.search(r"(Nexsalon|how.*works)", msg):
         return "APP_GUIDE"
-
+        
+            
     # 3️⃣ LOCATION - when user wants salons near them (with OR without "show")
     # This asks for city: "near me", "nearby", "show salons near me", etc
+    # if re.search(r"\b(near me|nearby|in my area|closest)\b", msg):
+    #     return "LOCATION"
     if re.search(r"\b(near me|nearby|in my area|closest)\b", msg):
+
+        services = get_all_services()
+    
+        has_service = any(s in msg for s in services)
+        has_price = re.search(r"\d{2,5}", msg)
+    
+        # if service + price → SMART
+        if has_service and has_price:
+            return "SMART_RECOMMEND"
+    
         return "LOCATION"
 
   # ⭐ TRENDING SALONS
@@ -85,5 +109,6 @@ def detect_intent(message: str) -> str:
     ):
         return "BEAUTY_SUGGESTION"
 
+    
     # 8️⃣ FALLBACK - everything else
     return "FREE_TEXT"

@@ -21,6 +21,7 @@ from app.services.firebase_service import (
      get_open_salons,
      get_salons_for_service,
 extract_service_name,
+recommend_salons,
 )
 
 router = APIRouter(prefix="/api")
@@ -51,12 +52,13 @@ def safe_firebase(fn, default):
 
 
 # =====================================================
-# STREAM CHAT (ChatGPT style)
+# STREAM CHAT (ChatGPT style - with word-by-word for AI)
 # =====================================================
 @router.post("/chat-stream")
 async def chat_stream(request: ChatRequest):
 
     import json
+    import asyncio
 
     response = await chat(request)
 
@@ -64,11 +66,27 @@ async def chat_stream(request: ChatRequest):
     if not response:
         response = {"reply_text": "Sorry, something went wrong."}
 
-    reply = response.get("reply_text", "No reply")
-
+    # 🤖 Check if this is an AI-only response (BEAUTY_SUGGESTION or FREE_TEXT)
+    response_type = response.get("type", "")
+    is_ai_response = response_type in ["beauty_tip", "free_text"]
+    
     async def generate():
-        yield reply
+        if is_ai_response:
+            # 🔥 STREAM MODE - word-by-word streaming for AI responses
+            try:
+                for token in generate_ai_reply_stream(request.message):
+                    yield token
+                    # ⏱️ Add slight delay (30ms) to make AI generation visible
+                    await asyncio.sleep(0.03)
+            except Exception as e:
+                print(f"❌ Stream error: {e}")
+                yield "Sorry, AI temporarily unavailable."
+        else:
+            # 📋 NORMAL MODE - return full response at once
+            reply = response.get("reply_text", "No reply")
+            yield reply
 
+        # Append metadata at the end
         metadata = {k: v for k, v in response.items() if k != "reply_text"}
         yield "\n\n__META__" + json.dumps(metadata)
 
@@ -182,12 +200,54 @@ async def chat(request: ChatRequest):
             }
 
         return {
-            "reply_text": f"📍 Salons in {city}:",
+            "reply_text": f"📍 Salons near {city}:",
             "type": "salon_list",
             "salons": salons,
             "suggestions": ["View services", "How Nexsalon works"],
         }
   
+    if intent == "SMART_RECOMMEND":
+        # 📍 Location priority: message → request.location → None
+        city = extract_city(raw_message)
+        
+        if not city and request.location:
+            city = request.location
+        
+        # ✅ Always pass detected location to ensure filtering
+        salons = recommend_salons(raw_message, city)
+        
+        if not salons:
+            return {
+                "reply_text": "No salons found for your request",
+                "type": "text"
+            }
+        
+        # detect budget
+        import re
+        m = re.search(r"(\d{2,5})", raw_message)
+        budget = m.group(1) if m else None
+        
+        # detect service
+        service = extract_service_name(raw_message)
+        
+        text = "Recommended salons"
+        
+        if service:
+            text += f" for {service}"
+        
+        if budget:
+            text += f" under ₹{budget}"
+        
+        if city:
+            text += f" near {city}"
+        
+        text += ":"
+        
+        return {
+            "reply_text": text,
+            "type": "salon_list",
+            "salons": salons
+        }
     # =====================================================
     # 6️⃣ SHOW ALL SALONS
     # =====================================================
@@ -388,7 +448,6 @@ async def chat(request: ChatRequest):
                 "How Nexsalon works",
             ],
         }
-
     # # =====================================================
     # # 8️⃣ BOOK SERVICE (requires salon selected)
     # # =====================================================

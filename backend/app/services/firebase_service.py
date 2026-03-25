@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 from collections import Counter
 from datetime import datetime, timedelta
+import re
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 FIREBASE_KEY_PATH = os.path.join(BASE_DIR, "firebase_key.json")
@@ -53,6 +54,8 @@ def get_all_salons():
                 "address": address,
                 "city": city,
                 "rating": salon.get("rating", 0),  # ✅ Use 0 as default, not None
+                "price": salon.get("price", 500),
+                "rating": salon.get("rating", 4.5),
             })
         
         return salons
@@ -445,3 +448,87 @@ def get_salons_for_service(service_name):
                 break
 
     return result    
+
+def get_all_services():
+
+    try:
+        ref = db.reference("salonandspa/salons")
+        salons = ref.get() or {}
+
+        services = set()
+
+        for salon in salons.values():
+
+            salon_services = salon.get("services", {})
+
+            for s in salon_services.values():
+
+                name = s.get("name", "")
+
+                if name:
+                    services.add(name.lower())
+
+        return list(services)
+
+    except Exception as e:
+        print("❌ Service fetch error:", e)
+        return []
+        
+
+def recommend_salons(message: str, detected_city=None):
+    """
+    Recommend salons matching service + budget + location
+    
+    Location priority:
+    1. Extract from message ("in City")
+    2. Use detected_city parameter (from request.location or geolocation)
+    3. No location filter (return all matching budget/service)
+    """
+    msg = message.lower()
+
+    budget = None
+    service = None
+    location = None
+
+    # 💰 Extract budget from message
+    m = re.search(r"(\d{2,5})", msg)
+    if m:
+        budget = int(m.group(1))
+
+    # 🛍️ Extract service from message
+    services = get_all_services()
+    for s in services:
+        if s in msg:
+            service = s
+            break
+
+    # 📍 Location priority: message → detected_city parameter
+    location = extract_city(msg)
+
+    if not location and detected_city:
+        # ✅ Use detected city (from geolocation or request.location)
+        location = detected_city.lower().strip()
+
+    salons = get_all_salons()
+    results = []
+
+    for s in salons:
+        # 📍 Apply location filter if location is specified
+        if location:
+            salon_city = s.get("city", "").lower().strip()
+            address = s.get("address", "").lower()
+            
+            # Match if detected location is in either:
+            # - The extracted city field, OR
+            # - The full address (substring match)
+            if location not in salon_city and location not in address:
+                continue
+
+        # 💰 Apply budget filter if budget is specified
+        price = s.get("price", 500)
+        if budget and price > budget:
+            continue
+
+        results.append(s)
+
+    return results[:3]
