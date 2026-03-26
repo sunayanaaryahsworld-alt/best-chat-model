@@ -36,6 +36,12 @@ def detect_intent(message: str) -> str:
     if re.search(r"(Nexsalon|how.*works)", msg):
         return "APP_GUIDE"
         
+    # 🎁 OFFERS + NEARBY (must be before LOCATION)
+
+    if re.search(r"\b(offer|offers|discount|deal|promo|sale)\b", msg) and \
+       re.search(r"\b(near me|nearby|in my area|closest)\b", msg):
+    
+        return "OFFERS_NEARBY"   
             
     # 3️⃣ LOCATION - when user wants salons near them (with OR without "show")
     # This asks for city: "near me", "nearby", "show salons near me", etc
@@ -71,6 +77,12 @@ def detect_intent(message: str) -> str:
         return "OPEN_SALON"    
     if re.search(r"\b(salon for|salon with|find salon for)\b", msg):
         return "SALON_FOR_SERVICE"    
+        
+    # 🎁 OFFERS - show offers / discounts
+    # if re.search(r"\b(offer|offers|discount|discounts|deal|deals|promo|sale)\b", msg):
+    #     return "SHOW_OFFERS"
+    if re.search(r"\b(offer|offers|discount|deal|promo|sale)\b", msg):
+        return "SHOW_OFFERS"
         
     # 4️⃣ SHOW SALONS - show all salons (NOT location-based)
     # Only if they didn't ask for "near me"

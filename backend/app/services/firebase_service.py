@@ -30,13 +30,15 @@ def get_all_salons():
     """
     try:
         ref = db.reference("salonandspa/salons")
+
         salons_data = ref.get() or {}
+        
+        # print("SALONS:", salons_data.keys())
         
         salons = []
         for salon_id, salon in salons_data.items():
             if not salon.get("name"):
                 continue
-            
             # TO THIS (working):
             address = salon.get("address", "").strip()
             city = ""
@@ -48,6 +50,9 @@ def get_all_salons():
                     city = parts[-2]
                 elif parts:
                     city = parts[-1]
+                    
+            salon_id_val = salon_id        
+            offers = get_offers_by_salon_id(salon_id_val)  
             
             salons.append({
                 "name": salon.get("name", "").strip(),
@@ -55,7 +60,7 @@ def get_all_salons():
                 "city": city,
                 "rating": salon.get("rating", 0),  # ✅ Use 0 as default, not None
                 "price": salon.get("price", 500),
-                "rating": salon.get("rating", 4.5),
+                "offers": offers,
             })
         
         return salons
@@ -532,3 +537,94 @@ def recommend_salons(message: str, detected_city=None):
         results.append(s)
 
     return results[:3]
+    
+# ==================================================
+# 🎁 GET OFFERS BY SALON ID
+# Path: offers/salon/{salonId}
+# ==================================================
+def get_offers_by_salon_id(salon_id):
+
+    try:
+        ref = db.reference(f"salonandspa/offers/salon/{salon_id}")
+
+        data = ref.get() or {}
+
+        offers = []
+
+        for offer_id, offer in data.items():
+
+            status = offer.get("status")
+            valid_until = offer.get("validUntil")
+
+            # only approved
+            if status != "approved":
+                continue
+
+            # check date
+            if valid_until:
+                today = datetime.now().date()
+                try:
+                    end = datetime.strptime(valid_until, "%Y-%m-%d").date()
+                    if end < today:
+                        continue
+                except:
+                    pass
+
+            offers.append({
+                "title": offer.get("title"),
+                "discount": offer.get("discount"),
+                "description": offer.get("description"),
+            })
+
+        return offers
+
+    except Exception as e:
+        print("OFFERS ERROR:", e)
+        return []
+        
+# ==================================================
+# 🎁 GET ALL ACTIVE OFFERS (ALL SALONS)
+# Path: offers/salon
+# ==================================================
+def get_all_active_offers():
+    """
+    Fetch all approved offers across all salons
+    Returns list of offers with salon_id attached
+    """
+    try:
+        ref = db.reference("salonandspa/offers/salon")
+        
+        data = ref.get()
+        
+        # print("OFFERS ROOT:", data)
+        all_data = ref.get() or {}
+
+        result = []
+        for salon_id, salon_offers in all_data.items():
+            if not isinstance(salon_offers, dict):
+                continue
+            for offer_id, offer in salon_offers.items():
+                if offer.get("status") != "approved":
+                    continue
+                if offer.get("deletedAt"):
+                    continue
+                result.append({
+                    "offer_id": offer_id,
+                    "salon_id": salon_id,
+                    "title": offer.get("title", ""),
+                    "description": offer.get("description", ""),
+                    "discount": offer.get("discount", 0),
+                    "valid_from": offer.get("validFrom", ""),
+                    "valid_until": offer.get("validUntil", ""),
+                    "image": offer.get("image", ""),
+                })
+
+        return result
+    except Exception as e:
+        print(f"❌ Firebase error (get_all_active_offers): {e}")
+        return []    
+        
+##################################################################################################
+
+
+        

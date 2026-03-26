@@ -512,6 +512,15 @@ body {
   overflow: hidden;
 }
 
+.card-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background: #f5c542;
+  color: black;
+}
 .quick-action-btn::before {
   content: '';
   position: absolute;

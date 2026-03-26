@@ -22,6 +22,8 @@ from app.services.firebase_service import (
      get_salons_for_service,
 extract_service_name,
 recommend_salons,
+get_offers_by_salon_id,
+    get_all_active_offers,
 )
 
 router = APIRouter(prefix="/api")
@@ -184,7 +186,7 @@ async def chat(request: ChatRequest):
     # =====================================================
     # 5️⃣ SEARCH SALONS BY CITY
     # =====================================================
-    if request.location:
+    if request.location and intent not in ["SHOW_OFFERS", "OFFERS_NEARBY"]:
         city = request.location.strip()
         
         salons = get_salons_by_location(city)
@@ -291,6 +293,152 @@ async def chat(request: ChatRequest):
             "type": "salon_list",
             "salons": salons,
             "suggestions": ["View services", "Show all salons"],
+        }
+        
+    # # =====================================================
+    # # 🎁 SHOW OFFERS / DISCOUNTS
+    # # =====================================================
+    # if intent == "SHOW_OFFERS":
+
+    #     all_salons = get_all_salons()
+    
+    #     salons_with_offers = []
+    
+    #     for s in all_salons:
+    
+    #         salon_id = s.get("id") or s.get("salon_id")
+    
+    #         offers = get_offers_by_salon_id(salon_id)
+    
+    #         active = [
+    #             o for o in offers
+    #             if o.get("status") == "approved"
+    #         ]
+    
+    #         if active:
+    #             s["offers"] = active
+    #             salons_with_offers.append(s)
+    
+    #     if not salons_with_offers:
+    #         return {
+    #             "reply_text": "No active offers right now",
+    #             "type": "empty",
+    #         }
+    
+    #     return {
+    #         "reply_text": "🎁 Salons with active offers:",
+    #         "type": "salon_list",
+    #         "salons": salons_with_offers,
+    #         "suggestions": ["View services"]
+    #     }
+    # =====================================================
+# 🎁 SHOW OFFERS FOR A SPECIFIC SALON
+# Triggered when user types: "show offers for {salon_name}"
+# Place this block BEFORE the existing SHOW_OFFERS block
+# =====================================================
+
+    # =====================================================
+# 🎁 OFFERS NEARBY (location + offer)
+# =====================================================
+
+    if intent == "OFFERS_NEARBY":
+    
+        if not request.location:
+            return {
+                "reply_text": "Which city?",
+                "type": "ask_location",
+            }
+    
+        city = request.location.strip()
+    
+        salons = get_salons_by_location(city)
+    
+        salons_with_offers = []
+    
+        for s in salons:
+    
+            salon_id = s.get("id") or get_salon_id_by_name(s.get("name", ""))
+    
+            offers = get_offers_by_salon_id(salon_id)
+    
+            active = [o for o in offers if o]
+    
+            if active:
+                s["offers"] = active
+                salons_with_offers.append(s)
+    
+        if not salons_with_offers:
+            return {
+                "reply_text": f"No offers in {city}",
+                "type": "empty",
+            }
+    
+        return {
+            "reply_text": f"🎁 Offers in {city}:",
+            "type": "salon_list",
+            "salons": salons_with_offers,
+        }
+    
+    if intent == "SHOW_OFFERS" and request.salon_name:
+        # User clicked "View offers" on a specific salon card
+        salon_id = get_salon_id_by_name(request.salon_name)
+    
+        if not salon_id:
+            return {
+                "reply_text": f"❌ Could not find salon: {request.salon_name}",
+                "type": "empty",
+            }
+    
+        offers = get_offers_by_salon_id(salon_id)
+    
+        active_offers = [o for o in offers if o]   # already filtered inside get_offers_by_salon_id
+    
+        if not active_offers:
+            return {
+                "reply_text": f"No active offers for {request.salon_name} right now.",
+                "type": "empty",
+                "suggestions": ["Show all salons", "View services"],
+            }
+    
+        return {
+            "reply_text": f"🎁 Offers at {request.salon_name}:",
+            "type": "offers",
+            "offers": active_offers,
+            "suggestions": ["View services", "Show all salons"],
+        }
+    
+    
+    # =====================================================
+    # 🎁 SHOW OFFERS — no salon selected → show salon cards
+    # (existing block, REPLACE your current SHOW_OFFERS block with this)
+    # =====================================================
+    
+    if intent == "SHOW_OFFERS":
+        all_salons = get_all_salons()
+    
+        salons_with_offers = []
+    
+        for s in all_salons:
+            salon_id = s.get("id") or get_salon_id_by_name(s.get("name", ""))
+            offers = get_offers_by_salon_id(salon_id)
+            active = [o for o in offers if o]
+    
+            if active:
+                # Attach offers to salon so frontend knows to show "View offers" button
+                s["offers"] = active
+                salons_with_offers.append(s)
+    
+        if not salons_with_offers:
+            return {
+                "reply_text": "No active offers right now.",
+                "type": "empty",
+            }
+    
+        return {
+            "reply_text": "🎁 Salons with active offers:",
+            "type": "salon_list",
+            "salons": salons_with_offers,
+            "suggestions": ["View services"],
         }
         
     # =====================================================

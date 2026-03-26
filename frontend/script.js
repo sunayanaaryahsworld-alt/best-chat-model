@@ -37,57 +37,271 @@ function clearCards() {
   chatBox.querySelectorAll(".cards-container").forEach(el => el.remove());
 }
 
+// function renderOffersCards(offers = []) {
+
+//   clearCards();
+
+//   if (!Array.isArray(offers) || offers.length === 0) {
+//     return;
+//   }
+
+//   const container = document.createElement("div");
+//   container.className = "cards-container";
+
+//   offers.forEach(o => {
+
+//     const card = document.createElement("div");
+//     card.className = "card offer-card";
+
+//     card.innerHTML = `
+//       <div class="card-header">
+//         <h3>🎁 ${o.title || "Offer"}</h3>
+//       </div>
+
+//       <div class="card-details">
+//         <p>${o.description || ""}</p>
+//         <p><b>${o.discount || 0}% OFF</b></p>
+//       </div>
+//     `;
+
+//     container.appendChild(card);
+
+//   });
+
+//   chatBox.appendChild(container);
+// }
+
 
 /* ======================================================
    RENDER SALON CARDS
 ====================================================== */
+// function renderSalonCards(salons = []) {
+//   clearCards();
+
+//   if (!Array.isArray(salons) || salons.length === 0) {
+//     return;
+//   }
+
+//   const container = document.createElement("div");
+//   container.className = "cards-container";
+
+//   salons.forEach(salon => {
+//     const card = document.createElement("div");
+//     card.className = "card salon-card";
+
+//     const safeAddress = escapeHtml(salon.address || salon.city || "");
+//     const safeName = escapeHtml(salon.name || "");
+//     const safeCity = escapeHtml(salon.city || "");
+
+//     let ratingHTML = "";
+//     if (salon.rating && salon.rating > 0) {
+//       ratingHTML = `<div class="rating-badge"><span class="stars">&#11088;</span> ${salon.rating.toFixed(1)}</div>`;
+//     }
+
+//     // card.innerHTML = `
+//     //   <div class="card-header">
+//     //     <h3 class="salon-name">${safeName}</h3>
+//     //     ${ratingHTML}
+//     //   </div>
+//     //   <div class="card-details">
+//     //     <p class="city-badge">&#128205; ${safeCity}</p>
+//     //     <p class="address-text">${safeAddress}</p>
+//     //   </div>
+//     //   <button class="card-btn btn-primary">View services</button>
+//     // `;
+//     let offersHTML = "";
+
+// if (salon.offers && salon.offers.length > 0) {
+
+//   offersHTML += `<div class="offers-box">`;
+
+//   salon.offers.forEach(o => {
+
+//     offersHTML += `
+//       <div class="offer-item">
+//         🎁 ${o.title || "Offer"} 
+//         ${o.discount ? "- " + o.discount + "%" : ""}
+//       </div>
+//     `;
+
+//   });
+
+//   offersHTML += `</div>`;
+// }
+
+// // card.innerHTML = `
+// //   <div class="card-header">
+// //     <h3 class="salon-name">${safeName}</h3>
+// //     ${ratingHTML}
+// //   </div>
+
+// //   <div class="card-details">
+// //     <p class="city-badge">&#128205; ${safeCity}</p>
+// //     <p class="address-text">${safeAddress}</p>
+// //   </div>
+
+// //   ${offersHTML}
+
+// //   <button class="card-btn btn-primary">View services</button>
+// // `;
+
+// let offerButton = "";
+
+// if (salon.offers && salon.offers.length > 0) {
+//   offerButton = `
+//     <button class="card-btn btn-secondary view-offers-btn">
+//       View offers
+//     </button>
+//   `;
+// }
+
+// card.innerHTML = `
+//   <div class="card-header">
+//     <h3 class="salon-name">${safeName}</h3>
+//     ${ratingHTML}
+//   </div>
+
+//   <div class="card-details">
+//     <p class="city-badge">&#128205; ${safeCity}</p>
+//     <p class="address-text">${safeAddress}</p>
+//   </div>
+
+//   ${offersHTML}
+
+//   <div class="card-btn-row">
+//     <button class="card-btn btn-primary view-services-btn">
+//       View services
+//     </button>
+
+//     ${offerButton}
+//   </div>
+// `;
+
+//     // card.querySelector(".card-btn").addEventListener("click", () => {
+//     //   STATE.currentSalon = salon.name;
+//     //   addMessage("View services", "user");
+//     //   sendToBackend("View services");
+//     // });
+//     card.querySelector(".view-services-btn").addEventListener("click", () => {
+//   STATE.currentSalon = salon.name;
+//   addMessage("View services", "user");
+//   sendToBackend("View services");
+// });
+
+// const offerBtn = card.querySelector(".view-offers-btn");
+
+// if (offerBtn) {
+//   offerBtn.addEventListener("click", () => {
+//     STATE.currentSalon = salon.name;
+//     addMessage("Show offers", "user");
+//     sendToBackend("show offers for " + salon.name);
+//   });
+// }
+
+//     container.appendChild(card);
+//   });
+
+//   chatBox.appendChild(container);
+// }
 function renderSalonCards(salons = []) {
   clearCards();
-
+ 
   if (!Array.isArray(salons) || salons.length === 0) {
     return;
   }
-
+ 
   const container = document.createElement("div");
   container.className = "cards-container";
-
+ 
   salons.forEach(salon => {
     const card = document.createElement("div");
     card.className = "card salon-card";
-
+ 
     const safeAddress = escapeHtml(salon.address || salon.city || "");
-    const safeName = escapeHtml(salon.name || "");
-    const safeCity = escapeHtml(salon.city || "");
-
+    const safeName    = escapeHtml(salon.name || "");
+    const safeCity    = escapeHtml(salon.city || "");
+ 
     let ratingHTML = "";
     if (salon.rating && salon.rating > 0) {
       ratingHTML = `<div class="rating-badge"><span class="stars">&#11088;</span> ${salon.rating.toFixed(1)}</div>`;
     }
-
+ 
+    // Only show "View offers" button if this salon actually has offers
+    const hasOffers = salon.offers && salon.offers.length > 0;
+    const offerBtnHTML = hasOffers
+      ? `<button class="card-btn btn-primary view-offers-btn">View offers</button>`
+      : "";
+ 
     card.innerHTML = `
       <div class="card-header">
         <h3 class="salon-name">${safeName}</h3>
         ${ratingHTML}
       </div>
+ 
       <div class="card-details">
         <p class="city-badge">&#128205; ${safeCity}</p>
         <p class="address-text">${safeAddress}</p>
       </div>
-      <button class="card-btn btn-primary">View services</button>
+ 
+      <div class="card-btn-row">
+        <button class="card-btn btn-primary view-services-btn">View services</button>
+        ${offerBtnHTML}
+      </div>
     `;
-
-    card.querySelector(".card-btn").addEventListener("click", () => {
+ 
+    // View services click
+    card.querySelector(".view-services-btn").addEventListener("click", () => {
       STATE.currentSalon = salon.name;
       addMessage("View services", "user");
       sendToBackend("View services");
     });
-
+ 
+    // View offers click — calls backend with salon name, shows only that salon's offers
+    const offerBtn = card.querySelector(".view-offers-btn");
+    if (offerBtn) {
+      offerBtn.addEventListener("click", () => {
+        STATE.currentSalon = salon.name;
+        addMessage(`Show offers for ${salon.name}`, "user");
+        sendToBackend(`show offers for ${salon.name}`);
+      });
+    }
+ 
     container.appendChild(card);
   });
-
+ 
   chatBox.appendChild(container);
 }
 
+function renderOffersCards(offers = []) {
+  clearCards();
+ 
+  if (!Array.isArray(offers) || offers.length === 0) {
+    addMessage("No active offers for this salon right now.", "bot");
+    return;
+  }
+ 
+  const container = document.createElement("div");
+  container.className = "cards-container";
+ 
+  offers.forEach(o => {
+    const card = document.createElement("div");
+    card.className = "card offer-card";
+ 
+    card.innerHTML = `
+      <div class="card-header">
+        <h3>🎁 ${escapeHtml(o.title || "Offer")}</h3>
+      </div>
+      <div class="card-details">
+        <p>${escapeHtml(o.description || "")}</p>
+        ${o.discount ? `<p><b>${o.discount}% OFF</b></p>` : ""}
+      </div>
+    `;
+ 
+    container.appendChild(card);
+  });
+ 
+  chatBox.appendChild(container);
+}
 
 /* ======================================================
    RENDER SERVICE CARDS
@@ -235,13 +449,45 @@ async function detectCity() {
 }
 
 
+function getLoadingText(message) {
+
+    message = message.toLowerCase();
+
+    if (message.includes("offer")) {
+        return "Please wait while we are fetching the best offers for you...";
+    }
+
+    if (message.includes("salon")) {
+        return "Please wait while we are fetching salons for you...";
+    }
+
+    if (message.includes("spa")) {
+        return "Please wait while we are fetching spa details for you...";
+    }
+
+    if (message.includes("service")) {
+        return "Please wait while we are fetching services...";
+    }
+
+    if (message.includes("near") || message.includes("location")) {
+        return "Please wait while we are finding nearby salons...";
+    }
+
+    if (message.includes("best")) {
+        return "Please wait while we are finding the best salons for you...";
+    }
+
+    return "Please wait while we are fetching data...";
+}
+
 /* ======================================================
    SEND MESSAGE TO BACKEND
 ====================================================== */
 async function sendToBackend(message) {
   const typing = document.createElement("div");
   typing.className = "message bot";
-  typing.textContent = "Fetching...";
+  // typing.textContent = "please wait while we are Fetching the data...";
+typing.textContent = getLoadingText(message);
   chatBox.appendChild(typing);
 
   try {
@@ -314,26 +560,60 @@ async function sendToBackend(message) {
         textNode.textContent = finalText;
 
         // Parse and render cards + suggestions
-        try {
-          const meta = JSON.parse(buffer.slice(sentinelIdx + "\n\n__META__".length));
+//         try {
+//           const meta = JSON.parse(buffer.slice(sentinelIdx + "\n\n__META__".length));
+//           console.log("META:", meta)
 
-          if (meta.salons && meta.salons.length > 0) {
-            renderSalonCards(meta.salons);
-          }
-          if (meta.services && meta.services.length > 0) {
-            renderServiceCards(meta.services);
-          }
-          if (meta.suggestions && meta.suggestions.length > 0) {
-            renderQuickActions(meta.suggestions);
-          }
-          if (meta.type === "ask_location") {
-            STATE.awaitingCity = true;
-          } else {
-            STATE.awaitingCity = false;
-          }
-        } catch (e) {
-          console.error("Meta parse error:", e);
-        }
+//           if (meta.salons && meta.salons.length > 0) {
+//             renderSalonCards(meta.salons);
+//           }
+//           if (meta.services && meta.services.length > 0) {
+//             renderServiceCards(meta.services);
+//           }
+//           if (meta.suggestions && meta.suggestions.length > 0) {
+//             renderQuickActions(meta.suggestions);
+//           }
+//           if (meta.offers && meta.offers.length > 0) {
+//   // renderOffersCards(meta.offers);
+// }
+//           if (meta.type === "ask_location") {
+//             STATE.awaitingCity = true;
+//           } else {
+//             STATE.awaitingCity = false;
+//           }
+//         } catch (e) {
+//           console.error("Meta parse error:", e);
+//         }
+// =====================================================
+// Inside sendToBackend(), replace your meta parse block with this.
+// The only addition is the `meta.offers` check at the end.
+// =====================================================
+
+try {
+  const meta = JSON.parse(buffer.slice(sentinelIdx + "\n\n__META__".length));
+  console.log("META:", meta);
+
+  if (meta.salons && meta.salons.length > 0) {
+    renderSalonCards(meta.salons);
+  }
+  if (meta.services && meta.services.length > 0) {
+    renderServiceCards(meta.services);
+  }
+  // ✅ NEW: render offer cards only when backend explicitly sends offers
+  if (meta.type === "offers" && meta.offers && meta.offers.length > 0) {
+    renderOffersCards(meta.offers);
+  }
+  if (meta.suggestions && meta.suggestions.length > 0) {
+    renderQuickActions(meta.suggestions);
+  }
+  if (meta.type === "ask_location") {
+    STATE.awaitingCity = true;
+  } else {
+    STATE.awaitingCity = false;
+  }
+} catch (e) {
+  console.error("Meta parse error:", e);
+}
 
         break;
       }
@@ -376,17 +656,19 @@ function handleUserMessage() {
 ====================================================== */
 window.addEventListener("load", () => {
   addMessage(
-    "Hi! I'm Nexsalon Concierge\nI can help you find the perfect salon!",
+    "Hi! I'm Nexsalon Concierge \n I can help you find the perfect salon!",
     "bot"
   );
 
   renderQuickActions([
     "Show salons near me",
+    "offers near me",
     "Show all salons",
     "Top rated salons",
     "Trending salons",
-  //  "Best salons",
+    "show offers",
     "Beauty tips",
+    "Haircut under 500"
   ]);
 });
 
