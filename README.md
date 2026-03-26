@@ -1,8 +1,101 @@
-✅ Step 1 — Open project folder in terminal
+Best-Chat-Model
 
-Go to project folder:
+Multi-model chatbot using FastAPI + OpenRouter + Groq + Router + Evaluator + Firebase tracking.
+The system sends query to multiple models and returns the best response.
 
+Project Structure
+Best-Chat-Model/
+
+backend/
+│
+├── app/
+│   ├── api/
+│   ├── config/
+│   ├── prompts/
+│   ├── services/
+│   ├── utils/
+│
+├── router/
+│   ├── models/
+│
+embeddings/
+frontend/
+knowledge_base/
+venv/
+
+main.py
+router.py
+evaluator.py
+usage_tracker.py
+requirements.txt
+.env
+firebase_key.json
+chatbot_ui.html
+test_models.py
+test_router.py
+Folder Description
+backend/
+
+Backend logic of chatbot.
+
+app/api → API routes
+app/config → config settings
+app/prompts → prompt templates
+app/services → API calls
+app/utils → helper functions
+router/models → model handlers
+frontend/
+
+UI files.
+
+chatbot_ui.html → chat UI
+JS / CSS inside frontend
+embeddings/
+
+Stores embeddings (if used).
+
+knowledge_base/
+
+Static answers / FAQ.
+
+router.py
+
+Routes request to models.
+
+evaluator.py
+
+Selects best response.
+
+usage_tracker.py
+
+Logs usage in Firebase.
+
+main.py
+
+FastAPI entry point.
+
+Runs backend.
+
+.env
+GROQ_API_KEY=
+OPENROUTER_API_KEY=
+firebase_key.json
+
+Firebase credentials.
+
+Required for usage tracking.
+
+requirements.txt
+
+Python libraries.
+
+Setup Steps
+Step 1 — Open project folder
 F:\Best-Chat-Model
+
+Add Firebase file:
+
+firebase_key.json
 
 Activate venv:
 
@@ -11,48 +104,36 @@ venv\Scripts\activate
 You should see:
 
 (venv) PS F:\Best-Chat-Model>
-
-✅ Correct
-
-✅ Step 2 — Install requirements (only first time)
-
-Run:
-
+Step 2 — Install requirements
 pip install -r requirements.txt
 
-Only needed once.
+Only first time.
 
-✅ Step 3 — Check .env file
-
-Make sure .env has keys:
-
+Step 3 — Check .env
 GROQ_API_KEY=xxxx
 OPENROUTER_API_KEY=xxxx
-DEEPINFRA_API_KEY=xxxx
 
-If missing → APIs fail.
+If missing → API fails.
 
-✅ Step 4 — Run backend (IMPORTANT)
-
-You must run FastAPI first.
+Step 4 — Run backend
 
 Run:
 
 uvicorn main:app --reload
 
-You should see:
+Output:
 
 Uvicorn running on http://127.0.0.1:8000
 
-✅ Backend running
+Backend running.
 
-✅ Step 5 — Test API (optional)
+Step 5 — Test API
 
-Open browser:
+Open:
 
 http://127.0.0.1:8000/health
 
-Should show:
+Expected:
 
 {"status":"ok"}
 
@@ -60,62 +141,59 @@ Test chat:
 
 http://127.0.0.1:8000/chat?q=hello
 
-✅ Router works
+Router working.
 
-✅ Step 6 — Open UI
+Step 6 — Open UI
 
-Go to:
+Open file:
 
 frontend/chatbot_ui.html
 
 Open in browser.
 
-OR right click → Open with browser
-
-Now UI connects to:
+UI connects to:
 
 http://127.0.0.1:8000
-✅ Step 7 — Test chat
+Step 7 — Test chat
 
 Type:
 
 Explain AI
 
-You should see:
+Console:
 
 Trying openrouter...
 Trying groq...
 
-And response.
+Response appears.
 
-✅ Project running
+Project running.
 
-✅ When to run test files
+Test Files
 test_models.py
-
-Used to test APIs only
-
 python test_models.py
 
-Not required for UI.
+Tests APIs only.
 
 test_router.py
-
-Used to test router only
-
 python test_router.py
 
-Not required for UI.
+Tests router only.
 
-✅ Correct order to run project
-1. Activate venv
-2. python main.py
-3. open chatbot_ui.html
-4. send message
+Correct Order
 
-That’s it.
+1 Activate venv
+2 Run backend
+3 Open UI
+4 Send message
 
-✅ Project flow (important)
+venv\Scripts\activate
+uvicorn main:app --reload
+open chatbot_ui.html
+
+Done.
+
+Project Flow
 chatbot_ui.html
     ↓
 main.py (FastAPI)
@@ -124,6 +202,17 @@ router.py
     ↓
 models/*
     ↓
-evaluator.py (if best mode)
+evaluator.py
     ↓
 usage_tracker.py
+    ↓
+Response
+Features
+OpenRouter + Groq
+Best model selection
+Router system
+FastAPI backend
+HTML UI
+Firebase logging
+Env config
+Multi-model support
