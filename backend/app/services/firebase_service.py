@@ -1,22 +1,35 @@
 import os
+import json
 import firebase_admin
 from firebase_admin import credentials, db
 from collections import Counter
 from datetime import datetime, timedelta
 import re
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-FIREBASE_KEY_PATH = os.path.join(BASE_DIR, "firebase_key.json")
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+# FIREBASE_KEY_PATH = os.path.join(BASE_DIR, "firebase_key.json")
 
+# if not firebase_admin._apps:
+#     cred = credentials.Certificate(FIREBASE_KEY_PATH)
+#     firebase_admin.initialize_app(
+#         cred,
+#         {
+#             "databaseURL": "https://salonandspa-7b832-default-rtdb.firebaseio.com"
+#         }
+#     )
+
+# for render 
 if not firebase_admin._apps:
-    cred = credentials.Certificate(FIREBASE_KEY_PATH)
+    firebase_key = json.loads(os.environ["FIREBASE_KEY"])
+
+    cred = credentials.Certificate(firebase_key)
+
     firebase_admin.initialize_app(
         cred,
         {
             "databaseURL": "https://salonandspa-7b832-default-rtdb.firebaseio.com"
         }
     )
-
 
 def get_salons_batch(last_key=None, batch_size=10):
     try:
@@ -40,14 +53,35 @@ def get_salons_batch(last_key=None, batch_size=10):
             # skip first if it's duplicate of last_key
             if last_key and i == 0:
                 continue
-
+                
+            address = salon.get("address", "")
+            city = ""
+            
+            if address:
+                parts = [p.strip() for p in address.split(",") if p.strip()]
+                if len(parts) >= 3:
+                    city = parts[-3]
+                elif len(parts) == 2:
+                    city = parts[-2]
+                elif parts:
+                    city = parts[-1]
+            
             salons.append({
                 "id": salon_id,
                 "name": salon.get("name", ""),
-                "address": salon.get("address", ""),
+                "address": address,
+                "city": city,
                 "rating": salon.get("rating", 0),
                 "price": salon.get("price", 500),
-            })
+            })    
+
+            # salons.append({
+            #     "id": salon_id,
+            #     "name": salon.get("name", ""),
+            #     "address": salon.get("address", ""),
+            #     "rating": salon.get("rating", 0),
+            #     "price": salon.get("price", 500),
+            # })
 
         # next key for next batch
         next_key = keys[-1] if keys else None
