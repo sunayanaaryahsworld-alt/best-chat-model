@@ -1,18 +1,16 @@
-# ── Web framework ─────────────────────────────────────────────────────────────
+# ── Web framework ─────────────────────────────────────────────
 fastapi>=0.111.0
 uvicorn[standard]>=0.29.0
 pydantic>=2.5
 
-# ── HTTP client (used by openrouter, huggingface, fireworks, ollama) ───────────
+# ── HTTP client ───────────────────────────────────────────────
 httpx>=0.27.0
 
-# ── Environment variable loading ───────────────────────────────────────────────
+# ── Env variables ─────────────────────────────────────────────
 python-dotenv>=1.0.0
 
-# ── LLM provider SDKs ─────────────────────────────────────────────────────────
-groq>=0.9.0                       # Groq
+# ── LLM SDK ───────────────────────────────────────────────────
+groq>=0.9.0
 
-# HuggingFace and Fireworks use plain httpx (no extra SDK needed)
-# Ollama uses plain httpx (no extra SDK needed)
-
-firebase-admin
+# ── Firebase ─────────────────────────────────────────────────
+firebase-admin>=6.5.0
