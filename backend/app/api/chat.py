@@ -7,7 +7,8 @@ import asyncio
 from app.services.intent_service import detect_intent
 from app.services.groq_service import generate_ai_reply, generate_ai_reply_stream
 from app.services.firebase_service import (
-    get_all_salons,
+    # get_all_salons,
+    get_salons_batch,
     get_salons_by_location,
     get_services_by_salon_name,
     get_salon_id_by_name,
@@ -126,7 +127,9 @@ async def chat(request: ChatRequest):
     global ALL_SALONS_CACHE
     
     if ALL_SALONS_CACHE is None:
-        ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+        # ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+        salons, _ = get_salons_batch(batch_size=50)
+        ALL_SALONS_CACHE = salons
     
     all_salons = ALL_SALONS_CACHE
     
@@ -256,7 +259,9 @@ async def chat(request: ChatRequest):
     if intent == "SHOW_SALONS":
 
         if ALL_SALONS_CACHE is None:
-            ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+            # ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+            salons, _ = get_salons_batch(batch_size=50)
+            ALL_SALONS_CACHE = salons
 
         salons = ALL_SALONS_CACHE
 
@@ -414,7 +419,8 @@ async def chat(request: ChatRequest):
     # =====================================================
     
     if intent == "SHOW_OFFERS":
-        all_salons = get_all_salons()
+        # all_salons = get_all_salons()
+        all_salons, next_key = get_salons_batch(batch_size=10)
     
         salons_with_offers = []
     
@@ -690,7 +696,9 @@ async def chat(request: ChatRequest):
         # try DB first
     
         if ALL_SALONS_CACHE is None:
-            ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+            # ALL_SALONS_CACHE = safe_firebase(get_all_salons, [])
+            salons, _ = get_salons_batch(batch_size=50)
+            ALL_SALONS_CACHE = salons
     
         salons = ALL_SALONS_CACHE
     

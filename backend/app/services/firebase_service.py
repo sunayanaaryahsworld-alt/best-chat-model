@@ -18,55 +18,94 @@ if not firebase_admin._apps:
     )
 
 
+def get_salons_batch(last_key=None, batch_size=10):
+    try:
+        ref = db.reference("salonandspa/salons")
 
+        query = ref.order_by_key()
+
+        # start after last key (for pagination)
+        if last_key:
+            query = query.start_at(last_key)
+
+        query = query.limit_to_first(batch_size)
+
+        data = query.get() or {}
+
+        salons = []
+        keys = list(data.keys())
+
+        for i, (salon_id, salon) in enumerate(data.items()):
+            
+            # skip first if it's duplicate of last_key
+            if last_key and i == 0:
+                continue
+
+            salons.append({
+                "id": salon_id,
+                "name": salon.get("name", ""),
+                "address": salon.get("address", ""),
+                "rating": salon.get("rating", 0),
+                "price": salon.get("price", 500),
+            })
+
+        # next key for next batch
+        next_key = keys[-1] if keys else None
+
+        return salons, next_key
+
+    except Exception as e:
+        print("❌ Batch fetch error:", e)
+        return [], None
+        
 # ==================================================
 # 🏪 GET ALL SALONS FROM FIREBASE
 # Path: salonandspa/salons
 # ==================================================
-def get_all_salons():
-    """
-    Fetch ALL salons from Firebase Realtime DB
-    Returns consistent data structure
-    """
-    try:
-        ref = db.reference("salonandspa/salons")
+# def get_all_salons():
+#     """
+#     Fetch ALL salons from Firebase Realtime DB
+#     Returns consistent data structure
+#     """
+#     try:
+#         ref = db.reference("salonandspa/salons")
 
-        salons_data = ref.get() or {}
+#         salons_data = ref.get() or {}
         
-        # print("SALONS:", salons_data.keys())
+#         # print("SALONS:", salons_data.keys())
         
-        salons = []
-        for salon_id, salon in salons_data.items():
-            if not salon.get("name"):
-                continue
-            # TO THIS (working):
-            address = salon.get("address", "").strip()
-            city = ""
-            if address:
-                parts = [p.strip() for p in address.split(",") if p.strip()]
-                if len(parts) >= 3:
-                    city = parts[-3]
-                elif len(parts) == 2:
-                    city = parts[-2]
-                elif parts:
-                    city = parts[-1]
+#         salons = []
+#         for salon_id, salon in salons_data.items():
+#             if not salon.get("name"):
+#                 continue
+#             # TO THIS (working):
+#             address = salon.get("address", "").strip()
+#             city = ""
+#             if address:
+#                 parts = [p.strip() for p in address.split(",") if p.strip()]
+#                 if len(parts) >= 3:
+#                     city = parts[-3]
+#                 elif len(parts) == 2:
+#                     city = parts[-2]
+#                 elif parts:
+#                     city = parts[-1]
                     
-            salon_id_val = salon_id        
-            offers = get_offers_by_salon_id(salon_id_val)  
+#             salon_id_val = salon_id        
+#             offers = get_offers_by_salon_id(salon_id_val)  
             
-            salons.append({
-                "name": salon.get("name", "").strip(),
-                "address": address,
-                "city": city,
-                "rating": salon.get("rating", 0),  # ✅ Use 0 as default, not None
-                "price": salon.get("price", 500),
-                "offers": offers,
-            })
+#             salons.append({
+#                 "name": salon.get("name", "").strip(),
+#                 "address": address,
+#                 "city": city,
+#                 "rating": salon.get("rating", 0),  # ✅ Use 0 as default, not None
+#                 "price": salon.get("price", 500),
+#                 "offers": offers,
+#             })
         
-        return salons
-    except Exception as e:
-        print(f"❌ Firebase error (get_all_salons): {e}")
-        return []
+#         return salons
+#     except Exception as e:
+#         print(f"❌ Firebase error (get_all_salons): {e}")
+#         return []
 
 
 # ==================================================
@@ -82,10 +121,12 @@ def get_salons_by_location(location: str):
     
     try:
         location_lower = location.lower().strip()
-        all_salons = get_all_salons()
+        # all_salons = get_all_salons()
+        salons, next_key = get_salons_batch(batch_size=10)
         
         matching = [
-            s for s in all_salons
+            # s for s in all_salons
+            s for s in salons
             if (location_lower in s.get("city", "").lower() or
                 location_lower in s.get("address", "").lower())
         ]
@@ -175,7 +216,8 @@ def get_all_salon_appointments():
 # ==================================================
 # 🔎 GET SALON DETAILS BY NAME
 def get_salon_by_name(name: str):
-    salons = get_all_salons()
+    # salons = get_all_salons()
+    salons, next_key = get_salons_batch(batch_size=10)
     name = name.lower().strip()
 
     for salon in salons:
@@ -203,7 +245,8 @@ def get_trending_salons(days: int = 30):
             if created >= cutoff:
                 counter[salon_id] += 1
 
-    salon_map = {s["salon_id"]: s for s in get_all_salons()}
+    # salon_map = {s["salon_id"]: s for s in get_all_salons()}
+    salon_map = {s["salon_id"]: s for s in get_salons_batch()}
 
     return [
         salon_map[salon_id]
@@ -216,7 +259,8 @@ def get_trending_salons(days: int = 30):
 # ==================================================
 def get_top_rated_salons(limit: int = 5):
 
-    salons = get_all_salons()
+    # salons = get_all_salons()
+    salons, next_key = get_salons_batch(batch_size=10)
 
     # ✅ keep only rated salons
     filtered = [
@@ -263,7 +307,8 @@ def get_trending_salons(limit: int = 5, days: int = 30):
                     counter[salon_id] += 1
 
         # get all salons
-        salons = get_all_salons()
+        # salons = get_all_salons()
+        salons, next_key = get_salons_batch(batch_size=10)
 
         # map salon_id → salon data
         salon_map = {}
@@ -335,7 +380,8 @@ def recommend_service(problem: str):
     
 def get_best_salon_for_service(service_name: str):
 
-    salons = get_all_salons()
+    # salons = get_all_salons()
+    salons, next_key = get_salons_batch(batch_size=10)
 
     result = []
 
@@ -358,7 +404,8 @@ def get_best_salon_for_service(service_name: str):
     
 def get_cheapest_salons(limit=5):
 
-    salons = get_all_salons()
+    # salons = get_all_salons()
+    salons, next_key = get_salons_batch(batch_size=10)
 
     result = []
 
@@ -392,7 +439,8 @@ def get_cheapest_salons(limit=5):
 
 def get_open_salons():
 
-    salons = get_all_salons()
+    # salons = get_all_salons()
+    salons, next_key = get_salons_batch(batch_size=10)
 
     now = datetime.now().hour
 
@@ -436,7 +484,8 @@ def extract_service_name(message: str):
     
 def get_salons_for_service(service_name):
 
-    salons = get_all_salons()
+    # salons = get_all_salons()
+    salons, next_key = get_salons_batch(batch_size=10)
 
     result = []
 
@@ -514,7 +563,8 @@ def recommend_salons(message: str, detected_city=None):
         # ✅ Use detected city (from geolocation or request.location)
         location = detected_city.lower().strip()
 
-    salons = get_all_salons()
+    # salons = get_all_salons()
+    salons, next_key = get_salons_batch(batch_size=10)
     results = []
 
     for s in salons:
