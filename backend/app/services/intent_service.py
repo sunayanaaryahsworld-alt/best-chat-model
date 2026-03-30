@@ -116,7 +116,7 @@ def detect_intent(message: str) -> str:
 
     # 7️⃣ BEAUTY - beauty, skincare, hair, makeup, etc
     if re.search(
-        r"\b(beauty|skin|hair|makeup|care|nail|face|scalp|moistur|sunscreen|glow|pigment|tan|pore|wrinkle|lip|eye|brow|lash|serum|toner|cleanser|shampoo|conditioner|frizz|dandruff|split|growth|strong|damage|dry|oily|acne|pimple|tip|advice|suggest|routine|treatment|how to|what to|remedy|home remedy|natural)\b",
+        r"\b(beauty|skin|hair|care|makeup|care|nail|face|scalp|moistur|sunscreen|glow|pigment|tan|pore|wrinkle|lip|eye|brow|lash|serum|toner|cleanser|shampoo|conditioner|frizz|dandruff|split|growth|strong|damage|dry|oily|acne|pimple|tip|advice|suggest|routine|tips|tip|skincare|beauty|treatment|how to|what to|remedy|home remedy|natural)\b",
         msg,
     ):
         return "BEAUTY_SUGGESTION"
