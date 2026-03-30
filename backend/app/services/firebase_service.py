@@ -9,27 +9,27 @@ import re
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 FIREBASE_KEY_PATH = os.path.join(BASE_DIR, "firebase_key.json")
 
-# if not firebase_admin._apps:
-#     cred = credentials.Certificate(FIREBASE_KEY_PATH)
-#     firebase_admin.initialize_app(
-#         cred,
-#         {
-#             "databaseURL": "https://salonandspa-7b832-default-rtdb.firebaseio.com"
-#         }
-#     )
-
-# # for render 
 if not firebase_admin._apps:
-    firebase_key = json.loads(os.environ["FIREBASE_KEY"])
-
-    cred = credentials.Certificate(firebase_key)
-
+    cred = credentials.Certificate(FIREBASE_KEY_PATH)
     firebase_admin.initialize_app(
         cred,
         {
             "databaseURL": "https://salonandspa-7b832-default-rtdb.firebaseio.com"
         }
     )
+
+# # for render 
+# if not firebase_admin._apps:
+#     firebase_key = json.loads(os.environ["FIREBASE_KEY"])
+
+#     cred = credentials.Certificate(firebase_key)
+
+#     firebase_admin.initialize_app(
+#         cred,
+#         {
+#             "databaseURL": "https://salonandspa-7b832-default-rtdb.firebaseio.com"
+#         }
+#     )
 
 def get_salons_batch(last_key=None, batch_size=10):
     try:
